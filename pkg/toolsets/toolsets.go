@@ -10,6 +10,7 @@ const (
 	Registry        = "registry"
 	RegistryPrivate = "registry-private" // Private registry (TFE/TFC)
 	Terraform       = "terraform"        // TFE/TFC operations
+	Migrate         = "migrate"          // Cross-org workspace migration
 
 	// Special toolsets
 	All     = "all"
@@ -46,6 +47,10 @@ var (
 		Name:        Terraform,
 		Description: "HCP Terraform/TFE operations (workspaces, runs, variables, etc.)",
 	}
+	MigrateToolset = Toolset{
+		Name:        Migrate,
+		Description: "Cross-organization workspace migration (single transfer, bulk transfer, summary)",
+	}
 )
 
 func AvailableToolsets() []Toolset {
@@ -53,6 +58,7 @@ func AvailableToolsets() []Toolset {
 		RegistryToolset,
 		RegistryPrivateToolset,
 		TerraformToolset,
+		MigrateToolset,
 	}
 }
 

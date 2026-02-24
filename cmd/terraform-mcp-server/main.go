@@ -124,19 +124,32 @@ func getToolsetsFromCmd(cmd *cobra.Command, logger *log.Logger) []string {
 		toolsFlag, err = cmd.Root().PersistentFlags().GetString("tools")
 	}
 
+	// Also check TOOLS env var
+	if (err != nil || toolsFlag == "") && os.Getenv("TOOLS") != "" {
+		toolsFlag = os.Getenv("TOOLS")
+		err = nil
+	}
+
 	if err == nil && toolsFlag != "" {
 		// Ensure --toolsets is not also set
 		toolsetsFlag, _ := cmd.Flags().GetString("toolsets")
 		if toolsetsFlag == "" {
 			toolsetsFlag, _ = cmd.Root().PersistentFlags().GetString("toolsets")
 		}
-		if toolsetsFlag != "" && toolsetsFlag != "default" {
+		// Ignore the default value "all" – it means no explicit --toolsets was given
+		if toolsetsFlag != "" && toolsetsFlag != "default" && toolsetsFlag != "all" {
 			logger.Fatal("Cannot use both --tools and --toolsets flags together")
 		}
 		return parseIndividualTools(toolsFlag, logger)
 	}
 
-	// Fall back to toolsets mode
+	// Check TOOLSETS env var first (takes precedence over the cobra flag default of "all")
+	if envToolsets := os.Getenv("TOOLSETS"); envToolsets != "" {
+		logger.Infof("Using toolsets from TOOLSETS env var: %s", envToolsets)
+		return parseToolsets(envToolsets, logger)
+	}
+
+	// Fall back to toolsets mode via cobra flag
 	toolsetsFlag, err := cmd.Flags().GetString("toolsets")
 	if err != nil {
 		toolsetsFlag, err = cmd.Root().PersistentFlags().GetString("toolsets")

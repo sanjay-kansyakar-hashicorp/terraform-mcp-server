@@ -52,6 +52,11 @@ var ToolToToolset = map[string]string{
 	"list_stacks":                         Terraform,
 	"get_stack_details":                   Terraform,
 	"list_workspace_policy_sets":          Terraform,
+
+	// Migrate toolset – cross-org workspace migration
+	"transfer_single_workspace":      Migrate,
+	"transfer_bulk_workspaces":       Migrate,
+	"get_workspace_transfer_summary": Migrate,
 }
 
 // GetToolsetForTool returns the toolset name for a given tool name

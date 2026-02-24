@@ -406,6 +406,58 @@ make docker-build
 
 3. This will create a local Docker image that you can use in the following configuration.
 
+### Running with Migrate Toolsets
+
+To enable migrate toolsets (bulk_migrate, bulk_migrate_status, etc.), set the `TOOLSETS` environment variable:
+
+```bash
+# Build the image first (if not already built)
+make docker-build
+
+# Run in stdio mode with migrate toolsets enabled
+docker run -i --rm \
+  -e TFE_ADDRESS=${TFE_ADDRESS} \
+  -e TFE_TOKEN=${TFE_TOKEN} \
+  -e TOOLSETS=registry,tfe,migrate \
+  terraform-mcp-server:dev
+
+# Run in streamable-http mode with migrate toolsets enabled
+docker run -p 8080:8080 --rm \
+  -e TRANSPORT_MODE=streamable-http \
+  -e TRANSPORT_HOST=0.0.0.0 \
+  -e TFE_ADDRESS=${TFE_ADDRESS} \
+  -e TFE_TOKEN=${TFE_TOKEN} \
+  -e TOOLSETS=registry,tfe,migrate \
+  terraform-mcp-server:dev
+
+# Or enable all toolsets at once
+docker run -p 8080:8080 --rm \
+  -e TRANSPORT_MODE=streamable-http \
+  -e TRANSPORT_HOST=0.0.0.0 \
+  -e TFE_ADDRESS=${TFE_ADDRESS} \
+  -e TFE_TOKEN=${TFE_TOKEN} \
+  -e TOOLSETS=all \
+  terraform-mcp-server:dev
+```
+
+**Required Environment Variables:**
+- `TFE_ADDRESS` - Your Terraform Enterprise/Cloud URL
+- `TFE_TOKEN` - Your API token (generate from User Settings → Tokens)
+- `TOOLSETS` - Comma-separated list of toolsets to enable (see available toolsets below)
+
+**Available Toolsets:**
+- `registry` - Public Terraform Registry (default)
+- `registry-private` - Private registry access (TFE/TFC)
+- `tfe` or `terraform` - HCP Terraform/TFE operations
+- `migrate` - Cross-org workspace migration tools
+- `all` - Enable all available toolsets
+- `default` - Enable default toolsets (currently just `registry`)
+
+**Optional Environment Variables:**
+- `ENABLE_TF_OPERATIONS` - Set to `true` to enable destructive operations
+
+Continue with step 4 below to use the configured image.
+
 ```bash
 # Run in stdio mode
 docker run -i --rm terraform-mcp-server:dev
@@ -455,17 +507,32 @@ curl http://localhost:8080/health
 
 ### Tool Filtering
 
-Control which tools are available using `--toolsets` (groups) or `--tools` (individual):
+By default, only the `registry` toolset is enabled. You can enable additional toolsets using `TOOLSETS` environment variable or `--toolsets` flag:
 
 ```bash
-# Enable tool groups (default: registry)
-terraform-mcp-server --toolsets=registry,terraform
+# Enable multiple toolsets (environment variable)
+export TOOLSETS=registry,tfe,migrate
+terraform-mcp-server
 
-# Enable specific tools only
+# Enable multiple toolsets (command line flag)
+terraform-mcp-server --toolsets=registry,tfe,migrate
+
+# Enable all toolsets
+terraform-mcp-server --toolsets=all
+
+# Enable specific tools only (alternative to toolsets)
 terraform-mcp-server --tools=search_providers,get_provider_details,list_workspaces
 ```
 
-Available toolsets: `registry`, `registry-private`, `terraform`, `all`, `default`. See `pkg/toolsets/mapping.go` for individual tool names. Cannot use both flags together.
+**Available Toolsets:**
+- `registry` - Public Terraform Registry (providers, modules, policies) - **default**
+- `registry-private` - Private registry access (TFE/TFC private modules and providers)
+- `tfe` or `terraform` - HCP Terraform/TFE operations (workspaces, runs, variables, etc.)
+- `migrate` - Cross-org workspace migration tools (bulk_migrate, bulk_migrate_status, etc.)
+- `all` - Enable all available toolsets
+- `default` - Enable default toolsets (currently just `registry`)
+
+See `pkg/toolsets/mapping.go` for individual tool names. Cannot use both `--toolsets` and `--tools` flags together.
 
 ## Transport Support
 

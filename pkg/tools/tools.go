@@ -5,6 +5,7 @@ package tools
 
 import (
 	registryTools "github.com/hashicorp/terraform-mcp-server/pkg/tools/registry"
+	tfeTools "github.com/hashicorp/terraform-mcp-server/pkg/tools/tfe"
 	"github.com/hashicorp/terraform-mcp-server/pkg/toolsets"
 	"github.com/mark3labs/mcp-go/server"
 	log "github.com/sirupsen/logrus"
@@ -59,6 +60,26 @@ func RegisterTools(hcServer *server.MCPServer, logger *log.Logger, enabledToolse
 
 	if toolsets.IsToolEnabled("get_policy_details", enabledToolsets) {
 		tool := registryTools.PolicyDetails(logger)
+		hcServer.AddTool(tool.Tool, tool.Handler)
+	}
+
+	// ── Migrate toolset ────────────────────────────────────────────────────
+	// Registered statically (unlike TFE tools) so they appear in the MCP
+	// Inspector immediately – no TFE session required to see the tool list.
+	// Authentication is enforced at call-time inside GetMigrateClientFromContext.
+
+	if toolsets.IsToolEnabled("transfer_single_workspace", enabledToolsets) {
+		tool := tfeTools.TransferSingleWorkspace(logger)
+		hcServer.AddTool(tool.Tool, tool.Handler)
+	}
+
+	if toolsets.IsToolEnabled("transfer_bulk_workspaces", enabledToolsets) {
+		tool := tfeTools.TransferBulkWorkspaces(logger)
+		hcServer.AddTool(tool.Tool, tool.Handler)
+	}
+
+	if toolsets.IsToolEnabled("get_workspace_transfer_summary", enabledToolsets) {
+		tool := tfeTools.GetWorkspaceTransferSummary(logger)
 		hcServer.AddTool(tool.Tool, tool.Handler)
 	}
 }
